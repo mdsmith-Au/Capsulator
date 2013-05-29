@@ -7,7 +7,7 @@
 
 # utility programs used by this Makefile
 CC   = gcc
-MAKE = gmake --no-print-directory
+MAKE = make --no-print-directory
 
 # set system-dependent variables
 OSTYPE = $(shell uname)
@@ -29,7 +29,7 @@ APP = capsulator
 DIR_INC       =
 DIR_LIB       =
 LIBS          = $(LIB_SOCKETS) -lpthread
-FLAGS_CC_BASE = -c -Wall $(ARCH) $(ENDIAN) $(DIR_INC)
+FLAGS_CC_BASE = -c $(ENDIAN) $(DIR_INC)
 
 # compiler directives for debug and release modes
 BUILD_TYPE = debug
