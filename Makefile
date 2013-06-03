@@ -1,94 +1,53 @@
-# Makefile for Capsulator
-# ------------------------------------------------------------------------------
-# make        -- builds Capsulator and all dependencies in the default mode
-# make debug  -- builds Capsulator in debug mode
-# make release-- builds Capsulator in release mode
-# make clean  -- clean up byproducts
+# 
+# Copyright (C) 2009 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+# $Id: Makefile $
 
-# utility programs used by this Makefile
-CC   = gcc
-MAKE = gmake --no-print-directory
+# OpenWrt package for Capsulator
+# Prepared by Michael Smith, McGill University
 
-# set system-dependent variables
-OSTYPE = $(shell uname)
-ifeq ($(OSTYPE),Linux)
-ARCH=-D_LINUX_
-ENDIAN=-D_LITTLE_ENDIAN_
-LIB_SOCKETS =
-endif
-ifeq ($(OSTYPE),SunOS)
-ARCH=-D_SOLARIS_
-ENDIAN=-D_BIG_ENDIAN_
-LIB_SOCKETS = -lnsl -lsocket
-endif
+include $(TOPDIR)/rules.mk
 
-# define names of our build targets
-APP = capsulator
+PKG_NAME_SHORT:=capsulator
+PKG_NAME:=$(PKG_NAME_SHORT)
 
-# compiler and its directives
-DIR_INC       =
-DIR_LIB       =
-LIBS          = $(LIB_SOCKETS) -lpthread
-FLAGS_CC_BASE = -c -Wall $(ARCH) $(ENDIAN) $(DIR_INC)
+PKG_RELEASE:=1
+PKG_VERSION=0.1
 
-# compiler directives for debug and release modes
-BUILD_TYPE = debug
-ifeq ($(BUILD_TYPE),debug)
-FLAGS_CC_BUILD_TYPE = -g -D_DEBUG_
-else
-FLAGS_CC_BUILD_TYPE = -O3
-endif
+PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
-# put all the flags together
-CFLAGS = $(FLAGS_CC_BASE) $(FLAGS_CC_BUILD_TYPE)
+include $(INCLUDE_DIR)/package.mk
 
-# project sources
-SRCS = common.c capsulator.c get_ip_for_interface.c main.c
-OBJS = $(patsubst %.c,%.o,$(SRCS))
-DEPS = $(patsubst %.c,.%.d,$(SRCS))
+define Package/capsulator/Default
+	SECTION:=net
+	CATEGORY:=Network
+endef
 
-# include the dependencies once we've built them
-ifdef INCLUDE_DEPS
-include $(DEPS)
-endif
+define Package/capsulator/Default/description
+	A tunneling software written for Openflow deployment at Stanford.
+endef
 
-#########################
-## PHONY TARGETS
-#########################
-# note targets which don't produce a file with the target's name
-.PHONY: all clean clean-all clean-deps debug release deps
+define Package/capsulator
+	$(call Package/capsulator/Default)
+	TITLE:=Capsulator tunelling software
+	DEPENDS:=+openvswitch
+endef
 
-# build the program
-all: $(APP)
+define Package/capsulator/description
+	$(call Package/capsulator/Default/description)
+endef
 
-# clean up by-products (except dependency files)
-clean:
-	rm -f *.o $(APP)
+define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)
+	$(CP) ./capsulator/* $(PKG_BUILD_DIR)/
+endef
 
-# clean up all by-products
-clean-all: clean clean-deps
+define Package/capsulator/install
+	$(INSTALL_DIR) $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/capsulator $(1)/usr/sbin
+endef
 
-# clean up dependency files
-clean-deps:
-	rm -f .*.d
-
-# shorthand for building debug or release builds
-debug release:
-	@$(MAKE) BUILD_TYPE=$@ all
-
-# build the dependency files
-deps: $(DEPS)
-
-# includes are ready build command
-IR=ir
-$(APP).$(IR): $(OBJS)
-	$(CC) -o $(APP) $(OBJS) $(DIR_LIB) $(LIBS)
-
-#########################
-## REAL TARGETS
-#########################
-$(APP): deps
-	@$(MAKE) BUILD_TYPE=$(BUILD_TYPE) INCLUDE_DEPS=1 $@.$(IR)
-
-$(DEPS): .%.d: %.c
-	$(CC) -MM $(CFLAGS) $(DIRS_INC) $< > $@
+$(eval $(call BuildPackage,capsulator))
