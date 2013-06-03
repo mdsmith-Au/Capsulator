@@ -33,7 +33,7 @@ endef
 define Package/capsulator
 	$(call Package/capsulator/Default)
 	TITLE:=Capsulator tunelling software
-	DEPENDS:=+openvswitch
+	DEPENDS:=+openvswitch +libpthread
 endef
 
 define Package/capsulator/description
