@@ -48,6 +48,8 @@ endef
 define Package/capsulator/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/capsulator $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/sbin $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/capsulator.init $(1)/etc/init.d/capsulator
 endef
 
 $(eval $(call BuildPackage,capsulator))

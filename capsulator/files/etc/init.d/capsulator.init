@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+# Capsulator Init script for OpenWRT
+# Michael Smith, BCRL, McGill University
+
+START=48
+# DEBUG="echo"
+
+start() {
+
+	$DEBUG start-stop-daemon -q -S -m -p /var/run/capsulator.pid -b -x /usr/sbin/capsulator -- \
+		-f 192.168.1.13 -t eth0 -vb "tap0#20"
+	$DEBUG ifconfig tap0 up
+}
+
+stop() {
+	$DEBUG start-stop-daemon -q -K -p /var/run/capsulator.pid
+}
+
+restart() {
+	stop
+	sleep 1
+	start
+}
