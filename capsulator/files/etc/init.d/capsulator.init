@@ -3,21 +3,75 @@
 # Michael Smith, BCRL, McGill University
 
 START=48
-# DEBUG="echo"
+#DEBUG="echo"
 
 start() {
+        TUNNEL_IF=$(uci get capsulator.@basic[0].tunnel_if)
 
-	$DEBUG start-stop-daemon -q -S -m -p /var/run/capsulator.pid -b -x /usr/sbin/capsulator -- \
-		-f 192.168.1.13 -t eth0 -vb "tap0#20"
-	$DEBUG ifconfig tap0 up
+        ENDPOINT1=$(uci get capsulator.@tunnel[0].endpoint1)
+        ENDPOINT2=$(uci get capsulator.@tunnel[0].endpoint2)
+        ENDPOINT3=$(uci get capsulator.@tunnel[0].endpoint3)
+        ENDPOINT4=$(uci get capsulator.@tunnel[0].endpoint4)
+
+        INTERFACE1=$(uci get capsulator.@interfaces[0].interface1)
+        TAG1=$(uci get capsulator.@interfaces[0].tag1)
+
+        INTERFACE2=$(uci get capsulator.@interfaces[0].interface2)
+        TAG2=$(uci get capsulator.@interfaces[0].tag2)
+
+        INTERFACE3=$(uci get capsulator.@interfaces[0].interface3)
+        TAG3=$(uci get capsulator.@interfaces[0].tag3)
+
+        INTERFACE4=$(uci get capsulator.@interfaces[0].interface4)
+        TAG4=$(uci get capsulator.@interfaces[0].tag4)
+
+        NO_TUNNELS=$(uci get capsulator.@basic[0].tunnels)
+
+
+	# Arguments based on # of tunnels
+        if [ "$NO_TUNNELS" == "1" ]; then
+                OPTIONS=" -f $ENDPOINT1 -t $TUNNEL_IF -vb $INTERFACE1#$TAG1"
+        elif [ "$NO_TUNNELS" == "2" ]; then
+                OPTIONS=" -f $ENDPOINT1 -f $ENDPOINT2 -t $TUNNEL_IF -vb $INTERFACE1#$TAG1 -vb $INTERFACE2#$TAG2"
+        elif [ "$NO_TUNNELS" == "3" ]; then
+                OPTIONS=" -f $ENDPOINT1 -f $ENDPOINT2 -f $ENDPOINT3 -t $TUNNEL_IF -vb $INTERFACE1#$TAG1 -vb $INTERFACE2#$TAG2 -vb $INTERFACE3#$TAG3"
+        elif [ "$NO_TUNNELS" == "4" ]; then
+                OPTIONS=" -f $ENDPOINT1 -f $ENDPOINT2 -f $ENDPOINT3 -f $ENDPOINT4 -t $TUNNEL_IF -vb $INTERFACE1#$TAG1 -vb $INTERFACE2#$TAG2 -vb $INTERFACE3#$TAG3 -vb $INTERFACE4#$TAG4"
+        else
+                OPTIONS=""
+        fi
+
+        #Start capsulator
+        $DEBUG start-stop-daemon -q -S -b -x /usr/sbin/capsulator -- \
+                $OPTIONS
+
+	# Give capsulator time to create interface
+        $DEBUG sleep 3
+
+        #Bring tunnels up
+        if [ "$NO_TUNNELS" == "1" ]; then
+                $DEBUG ifconfig $INTERFACE1 up
+        elif [ "$NO_TUNNELS" == "2" ]; then
+                $DEBUG ifconfig $INTERFACE1 up
+                $DEBUG ifconfig $INTERFACE2 up
+        elif [ "$NO_TUNNELS" == "3" ]; then
+                $DEBUG ifconfig $INTERFACE1 up
+                $DEBUG ifconfig $INTERFACE2 up
+                $DEBUG ifconfig $INTERFACE3 up
+        elif [ "$NO_TUNNELS" == "4" ]; then
+                $DEBUG ifconfig $INTERFACE1 up
+                $DEBUG ifconfig $INTERFACE2 up
+                $DEBUG ifconfig $INTERFACE3 up
+                $DEBUG ifconfig $INTERFACE4 up
+        fi
 }
 
 stop() {
-	$DEBUG start-stop-daemon -q -K -p /var/run/capsulator.pid
+        $DEBUG start-stop-daemon -q -K -x capsulator
 }
 
 restart() {
-	stop
-	sleep 1
-	start
+        stop
+        sleep 1
+        start
 }
