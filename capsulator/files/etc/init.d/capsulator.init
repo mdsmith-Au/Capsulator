@@ -67,7 +67,7 @@ start() {
 }
 
 stop() {
-        $DEBUG start-stop-daemon -q -K -x capsulator
+        $DEBUG start-stop-daemon -q -K -x /usr/sbin/capsulator
 }
 
 restart() {
