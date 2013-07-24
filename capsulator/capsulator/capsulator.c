@@ -44,6 +44,9 @@ void* capsulator_thread_main_for_tunnel_port(void* vcapsulator);
  */
 void* capsulator_thread_main_for_border_port(void* vbpci);
 
+/** Basic check if an array contains an entry */
+int contains(uint32_t *array, int num_elements, int entry);
+
 /** binds a raw packets file descriptor fd to the interface specified by name */
 void bindll(int fd, char* name) {
     struct ifreq ifr;
@@ -249,11 +252,19 @@ void* capsulator_thread_main_for_tunnel_port(void* vcapsulator) {
                             data_len);
             continue;
         }
-        else
+        
+        /* Make sure IP source matches tunnel IP */
+        else if ( !contains(c->tp.tunnel_dest_ips, c->tp.tunnel_dest_ips_len, iphdr->saddr )) {
+            verbose_println("%s TPH: Source IP does not match any known tunnel IP, ignoring",
+                            c->tp.intf);
+            continue;
+        }
+        else {
             verbose_println("%s TPH: Tunnel received %d data bytes destined for Tag=%u",
                             c->tp.intf,
                             data_len,
                             ntohl(hdr->tag));
+        }
 
         /* forward to any border port which should receive this packet's data */
           for(i=0; i<c->bp_len; i++) {
@@ -275,6 +286,17 @@ void* capsulator_thread_main_for_tunnel_port(void* vcapsulator) {
 
     return NULL;
 }
+
+int contains(uint32_t *array, int num_elements, int entry) {
+    int i;
+    for (i=0; i < num_elements; i++) {
+        if (array[i] == entry) {
+	        return(1); 
+     }
+   }
+   return(0);
+}
+
 
 void* capsulator_thread_main_for_border_port(void* vbpci) {
     struct sockaddr_in addr;
