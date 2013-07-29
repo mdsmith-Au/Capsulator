@@ -42,7 +42,7 @@ FLAGS_CC_BUILD_TYPE = -O3
 endif
 
 # put all the flags together
-CFLAGS = $(FLAGS_CC_BASE) $(FLAGS_CC_BUILD_TYPE)
+CFLAGS += $(FLAGS_CC_BASE) $(FLAGS_CC_BUILD_TYPE)
 
 # project sources
 SRCS = common.c capsulator.c get_ip_for_interface.c main.c
